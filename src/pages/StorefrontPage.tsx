@@ -3,9 +3,13 @@ import { WomenSetItem, OccasionCategory, ApparelSize } from '../types/rental';
 import { HeroSection } from '../components/HeroSection';
 import { FilterBar } from '../components/FilterBar';
 import { RentalCard } from '../components/RentalCard';
+import { SkeletonLoader } from '../components/SkeletonLoader';
+import { EmptyState } from '../components/EmptyState';
+import { StepByStepGuide } from '../components/StepByStepGuide';
 
 interface StorefrontPageProps {
   items: WomenSetItem[];
+  isLoading?: boolean;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   selectedCategory: OccasionCategory;
@@ -25,6 +29,7 @@ interface StorefrontPageProps {
 
 export const StorefrontPage: React.FC<StorefrontPageProps> = ({
   items,
+  isLoading = false,
   searchQuery,
   setSearchQuery,
   selectedCategory,
@@ -41,6 +46,14 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
   onSelectItem,
   onOpenChat,
 }) => {
+  const handleResetFilters = () => {
+    setSelectedCategory('all');
+    setSelectedSize('all');
+    setSearchQuery('');
+    setOnlyAvailable(false);
+    setMaxPrice(10000);
+  };
+
   return (
     <div className="space-y-6">
       {/* Fashion Editorial Hero */}
@@ -71,29 +84,19 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
       />
 
       {/* Catalog Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {items.length === 0 ? (
-          <div className="py-24 text-center bg-white rounded-3xl border border-stone-200 shadow-2xs">
-            <span className="text-4xl block mb-3">👗</span>
-            <h3 className="font-serif text-lg font-bold text-neutral-900">
-              ไม่พบชุดเซ็ทตรงตามเงื่อนไขที่เลือก
-            </h3>
-            <p className="text-xs text-stone-500 mt-1 max-w-sm mx-auto font-light">
-              ลองล้างตัวกรองหรือเลือกโอกาสอื่น เพื่อค้นหาชุดเซ็ทที่คุณถูกใจ
-            </p>
-            <button
-              onClick={() => {
-                setSelectedCategory('all');
-                setSelectedSize('all');
-                setSearchQuery('');
-                setOnlyAvailable(false);
-                setMaxPrice(10000);
-              }}
-              className="mt-4 px-4 py-2 rounded-xl bg-neutral-950 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
-            >
-              ล้างตัวกรองทั้งหมด
-            </button>
-          </div>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        {isLoading ? (
+          <SkeletonLoader variant="card" count={8} />
+        ) : items.length === 0 ? (
+          <EmptyState
+            icon="search"
+            title="ไม่พบชุดเซ็ทตรงตามเงื่อนไขที่เลือก"
+            description="ลองปรับเปลี่ยนช่วงราคา ขนาดไซส์ หรือล้างตัวกรองเพื่อค้นหาชุดสวยในคอลเลกชันอื่นๆ"
+            actionLabel="ล้างตัวกรองทั้งหมด"
+            onAction={handleResetFilters}
+            secondaryActionLabel="เลือกโอกาสยอดนิยม"
+            onSecondaryAction={() => setSelectedCategory('wedding')}
+          />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {items.map((item) => (
@@ -107,6 +110,16 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
           </div>
         )}
       </section>
+
+      {/* Step-by-Step Guide on How It Works */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-12">
+        <StepByStepGuide
+          onStartExplore={() => {
+            window.scrollTo({ top: 300, behavior: 'smooth' });
+          }}
+        />
+      </section>
     </div>
   );
 };
+

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { UserCheck, Sparkles, X, Heart, ShieldCheck, Mail, Lock, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { UserCheck, Sparkles, X, Heart, ShieldCheck, Mail, Lock, ArrowRight, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { UserAccount } from '../types/rental';
-import { DEMO_ACCOUNTS, verifyAccountCredentials } from '../data/mockAccounts';
+import { DEMO_ACCOUNTS, verifyAccountCredentials, saveRegisteredAccount } from '../data/mockAccounts';
 
 interface CustomerAuthModalProps {
   isOpen: boolean;
@@ -25,6 +25,9 @@ export const CustomerAuthModal: React.FC<CustomerAuthModalProps> = ({
   const [customerName, setCustomerName] = useState('คุณพิมพ์ลดา พัฒนกิจ');
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [phone, setPhone] = useState('089-112-3456');
+  const [regPassword, setRegPassword] = useState('');
+  const [regConfirmPassword, setRegConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -38,15 +41,42 @@ export const CustomerAuthModal: React.FC<CustomerAuthModalProps> = ({
         setError('กรุณาระบุชื่อ-นามสกุล');
         return;
       }
+      if (!email.trim() || !email.includes('@')) {
+        setError('กรุณาระบุอีเมลที่ถูกต้อง');
+        return;
+      }
+      if (!regPassword.trim()) {
+        setError('กรุณากำหนดรหัสผ่าน');
+        return;
+      }
+      if (regPassword.length < 4) {
+        setError('รหัสผ่านต้องมีความยาวอย่างน้อย 4 ตัวอักษร');
+        return;
+      }
+      if (regPassword !== regConfirmPassword) {
+        setError('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน');
+        return;
+      }
+
       const newCustomer: UserAccount = {
         id: `usr-cust-${Date.now().toString().slice(-4)}`,
-        name: customerName,
-        email: email || 'customer@setista.com',
+        name: customerName.trim(),
+        email: email.trim().toLowerCase(),
         role: 'customer',
         tier: 'Standard',
-        phone: phone || '089-000-0000',
+        loyaltyTier: 'Silver',
+        loyaltyPoints: 0,
+        lifetimePoints: 0,
+        phone: phone.trim() || '089-000-0000',
         memberSince: 'วันนี้'
       };
+
+      saveRegisteredAccount({
+        ...newCustomer,
+        passwordOrPin: regPassword.trim(),
+        descriptionTh: `บัญชีลูกค้าใหม่ (${newCustomer.name})`
+      });
+
       onLoginSuccess(newCustomer);
       onClose();
       return;
@@ -232,7 +262,48 @@ export const CustomerAuthModal: React.FC<CustomerAuthModalProps> = ({
                 />
               </div>
 
-              {!isRegisterMode && (
+              {isRegisterMode ? (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                      กำหนดรหัสผ่าน <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={regPassword}
+                        onChange={(e) => setRegPassword(e.target.value)}
+                        className="w-full px-3 py-2 pr-10 rounded-xl border border-stone-300 text-xs bg-stone-50 font-mono"
+                        placeholder="อย่างน้อย 4 ตัวอักษร"
+                        required
+                        minLength={4}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 p-1 cursor-pointer"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                      ยืนยันรหัสผ่าน <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={regConfirmPassword}
+                      onChange={(e) => setRegConfirmPassword(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs bg-stone-50 font-mono"
+                      placeholder="กรอกรหัสผ่านซ้ำอีกครั้ง"
+                      required
+                    />
+                  </div>
+                </>
+              ) : (
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="block text-xs font-semibold text-neutral-700">

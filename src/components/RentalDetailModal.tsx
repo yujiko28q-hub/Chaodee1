@@ -1,6 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { WomenSetItem, SetBooking, SetReview, ApparelSize, UserAccount } from '../types/rental';
 import { ItemVisual } from './ItemVisual';
+import { ImageGallery } from './ImageGallery';
+import { StatusBadge } from './StatusBadge';
+import { VerifiedBadge } from './VerifiedBadge';
 import { SmartSizeRecommenderModal } from './SmartSizeRecommenderModal';
 import { calculatePointsEarned, LOYALTY_TIERS, getLoyaltyTier } from '../utils/loyalty';
 import { 
@@ -200,29 +203,38 @@ export const RentalDetailModal: React.FC<RentalDetailModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-fade-in"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 max-sm:p-0 max-sm:items-end animate-fade-in"
       onClick={onClose}
     >
       <div 
-        className="relative w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-left animate-scale-in"
+        className="relative w-full max-w-4xl bg-white rounded-3xl max-sm:rounded-b-none max-sm:rounded-t-3xl shadow-2xl overflow-hidden my-auto max-sm:my-0 max-h-[92vh] max-sm:max-h-[94vh] flex flex-col text-left animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Mobile Pull / Drag Handle for Bottom Sheet */}
+        <div className="sm:hidden pt-2.5 pb-1 flex justify-center bg-stone-50/90 shrink-0">
+          <div className="w-12 h-1.5 rounded-full bg-stone-300" />
+        </div>
+
         {/* Top Header Bar */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 bg-stone-50/90">
           <div className="flex items-center gap-2">
             <span className="text-xs font-serif font-bold text-rose-800 uppercase tracking-widest">
               {item.brand}
             </span>
+            <VerifiedBadge size="sm" showText={false} />
             <span className="text-stone-300">·</span>
             <span className="text-xs text-stone-500">{item.categoryNameTh}</span>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-full text-stone-400 hover:text-stone-900 hover:bg-stone-200 transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <StatusBadge status={item.isAvailable ? 'available' : 'rented'} size="sm" />
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-full text-stone-400 hover:text-stone-900 hover:bg-stone-200 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Modal Body */}
@@ -346,21 +358,14 @@ export const RentalDetailModal: React.FC<RentalDetailModalProps> = ({
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               {/* Left Column: Garment Visual & Detailed Specs */}
               <div className="lg:col-span-7 space-y-6">
-                {/* Lookbook Hero Visual */}
-                <div className="relative aspect-3/4 rounded-2xl overflow-hidden bg-stone-900 border border-stone-200 shadow-sm">
-                  <ItemVisual
-                    imageUrl={item.imageUrl}
-                    imageAlt={item.imageAlt}
-                    title={item.title}
-                    brand={item.brand}
-                    categoryNameTh={item.categoryNameTh}
-                    badge={item.setTypeTh}
-                    className="w-full h-full"
-                  />
-                  <div className="absolute bottom-3 left-3 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md text-[11px] text-white">
-                    มูลค่าราคาป้าย ฿{item.marketValue.toLocaleString()}
-                  </div>
-                </div>
+                {/* Lookbook Hero Visual with Interactive Image Gallery & Lightbox */}
+                <ImageGallery
+                  primaryImage={item.imageUrl}
+                  title={item.title}
+                  brand={item.brand}
+                  category={item.categoryNameTh}
+                  conditionNote={item.condition}
+                />
 
                 {/* Set Title & Vibe */}
                 <div>

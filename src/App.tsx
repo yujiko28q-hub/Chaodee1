@@ -26,6 +26,9 @@ import {
   SizeGuideModal,
   ReviewModal,
   LoyaltyProfileModal,
+  Toast,
+  BottomNavigation,
+  OnboardingModal,
 } from './components';
 
 // Architectural Layer 4: Services & Utilities (src/services/ & src/utils/)
@@ -54,6 +57,9 @@ export default function App() {
 
   // Auth Modal State
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Onboarding / How It Works Modal State
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
 
   // Customer sub-navigation tab (Browse / My Rentals / Care Policy)
   const [customerTab, setCustomerTab] = useState<'browse' | 'my-rentals' | 'care-policy'>('browse');
@@ -155,7 +161,8 @@ export default function App() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (showLoyaltyModal) setShowLoyaltyModal(false);
+        if (showOnboardingModal) setShowOnboardingModal(false);
+        else if (showLoyaltyModal) setShowLoyaltyModal(false);
         else if (reviewModalData) setReviewModalData(null);
         else if (selectedItemForDetail) setSelectedItemForDetail(null);
         else if (selectedItemForChat) setSelectedItemForChat(null);
@@ -170,7 +177,7 @@ export default function App() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showLoyaltyModal, reviewModalData, selectedItemForDetail, selectedItemForChat, contractData, showSizeGuideModal, showAuthModal, showCreateModal]);
+  }, [showOnboardingModal, showLoyaltyModal, reviewModalData, selectedItemForDetail, selectedItemForChat, contractData, showSizeGuideModal, showAuthModal, showCreateModal]);
 
   // Filtered items computation for Customer Storefront
   const filteredItems = useMemo(() => {
@@ -472,17 +479,10 @@ export default function App() {
         <div className="min-h-screen bg-stone-100 flex flex-col font-sans">
           {/* Toast Notification */}
           {toastMessage && (
-            <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl bg-neutral-950 text-white shadow-2xl text-xs font-medium animate-toast border border-stone-800 max-w-md">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span className="flex-1 leading-snug">{toastMessage}</span>
-              <button
-                type="button"
-                onClick={() => setToastMessage(null)}
-                className="p-1 rounded-full text-stone-400 hover:text-white hover:bg-stone-800 transition-colors cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            <Toast
+              message={toastMessage}
+              onClose={() => setToastMessage(null)}
+            />
           )}
 
           {/* Main Admin Console from src/pages/ */}
@@ -539,20 +539,13 @@ export default function App() {
   // RULE 2: ถ้าเข้าสู่ระบบบัญชีลูกค้าแล้ว -> เห็นบริการเต็มรูปแบบ (StorefrontPage, MyRentalsPage, CarePolicyPage)
   // =========================================================================
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50 text-neutral-900 font-sans selection:bg-rose-900 selection:text-rose-100">
+    <div className="min-h-screen flex flex-col bg-stone-50 text-neutral-900 font-sans selection:bg-rose-900 selection:text-rose-100 pb-16 md:pb-0">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl bg-neutral-950 text-white shadow-2xl text-xs font-medium animate-toast border border-stone-800 max-w-md">
-          <CheckCircle2 className="w-4 h-4 text-rose-300 shrink-0" />
-          <span className="flex-1 leading-snug">{toastMessage}</span>
-          <button
-            type="button"
-            onClick={() => setToastMessage(null)}
-            className="p-1 rounded-full text-stone-400 hover:text-white hover:bg-stone-800 transition-colors cursor-pointer"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        <Toast
+          message={toastMessage}
+          onClose={() => setToastMessage(null)}
+        />
       )}
 
       {/* Slim Admin Preview Ribbon (ONLY shown if an Admin account is previewing the storefront) */}
@@ -608,6 +601,7 @@ export default function App() {
         currentCustomerTab={customerTab}
         setCurrentCustomerTab={setCustomerTab}
         onOpenSizeGuide={() => setShowSizeGuideModal(true)}
+        onOpenOnboarding={() => setShowOnboardingModal(true)}
         activeBookingsCount={activeBookingsCount}
         currentUser={currentUser}
         onOpenAuth={() => setShowAuthModal(true)}
@@ -806,6 +800,31 @@ export default function App() {
           onUpdateListing={handleUpdateListing}
         />
       )}
+
+      {/* Onboarding / How It Works Modal */}
+      <OnboardingModal
+        isOpen={showOnboardingModal}
+        onClose={() => setShowOnboardingModal(false)}
+        onStartExplore={() => {
+          setCustomerTab('browse');
+          setShowOnboardingModal(false);
+          window.scrollTo({ top: 300, behavior: 'smooth' });
+        }}
+      />
+
+      {/* Mobile Bottom Navigation Bar (Fixed for thumb-friendly mobile experience) */}
+      <BottomNavigation
+        currentTab={customerTab}
+        onNavigateTab={(tab) => {
+          setCustomerTab(tab);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        currentUser={currentUser}
+        activeBookingsCount={activeBookingsCount}
+        onOpenAuth={() => setShowAuthModal(true)}
+        onGoToAdmin={() => setSystemMode('admin')}
+        systemMode={systemMode}
+      />
     </div>
   );
 }

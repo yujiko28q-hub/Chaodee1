@@ -224,15 +224,20 @@ export const SizeGuideModal: React.FC<SizeGuideModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 z-50 overflow-y-auto bg-black/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-fade-in text-left font-sans"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 max-sm:p-0 max-sm:items-end animate-fade-in text-left font-sans"
       onClick={onClose}
     >
       <div 
-        className="relative w-full max-w-3xl bg-white rounded-3xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-left animate-scale-in border border-stone-200"
+        className="relative w-full max-w-3xl bg-white rounded-3xl max-sm:rounded-b-none max-sm:rounded-t-3xl shadow-2xl overflow-hidden my-auto max-sm:my-0 max-h-[92vh] max-sm:max-h-[94vh] flex flex-col text-left animate-scale-in border border-stone-200"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Mobile Pull / Drag Handle */}
+        <div className="sm:hidden pt-2.5 pb-1 flex justify-center bg-stone-50/90 shrink-0">
+          <div className="w-12 h-1.5 rounded-full bg-stone-300" />
+        </div>
+
         {/* Header */}
-        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-stone-200 bg-stone-50/90">
+        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-stone-200 bg-stone-50/90 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-2xl bg-rose-900 text-white flex items-center justify-center shadow-xs">
               <Ruler className="w-5 h-5 text-rose-200" />

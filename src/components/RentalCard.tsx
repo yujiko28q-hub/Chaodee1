@@ -1,7 +1,9 @@
 import React from 'react';
 import { WomenSetItem } from '../types/rental';
 import { ItemVisual } from './ItemVisual';
-import { Star, MessageCircle, ArrowRight, Sparkles, Scissors } from 'lucide-react';
+import { StatusBadge } from './StatusBadge';
+import { VerifiedBadge } from './VerifiedBadge';
+import { Star, MessageCircle, ArrowRight, Scissors } from 'lucide-react';
 
 interface RentalCardProps {
   item: WomenSetItem;
@@ -15,7 +17,7 @@ export const RentalCard: React.FC<RentalCardProps> = ({
   onOpenChat
 }) => {
   return (
-    <div className="group flex flex-col bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-2xs hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-left">
+    <div className="group flex flex-col bg-white rounded-3xl border border-stone-200 overflow-hidden shadow-2xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-left">
       {/* Editorial Fashion Image Area (Aspect 3:4 or 4:5 for fashion looks) */}
       <div 
         onClick={() => onSelect(item)}
@@ -27,13 +29,18 @@ export const RentalCard: React.FC<RentalCardProps> = ({
           title={item.title}
           brand={item.brand}
           categoryNameTh={item.categoryNameTh}
-          badge={item.isAvailable ? 'พร้อมส่งทันที' : 'ติดคิวเช่า'}
+          badge={item.setTypeTh}
           className="w-full h-full"
         />
 
         {/* Free Dry Clean Badge Top Right */}
         <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-medium text-rose-200 border border-white/20">
           ฟรีซักแห้ง
+        </div>
+
+        {/* Status Badge Top Left overlay */}
+        <div className="absolute top-3 left-3">
+          <StatusBadge status={item.isAvailable ? 'available' : 'rented'} size="sm" />
         </div>
 
         {/* Color Swatch & Alteration Flag Bottom Left */}
@@ -51,9 +58,12 @@ export const RentalCard: React.FC<RentalCardProps> = ({
         <div>
           {/* Brand & Category line */}
           <div className="flex items-center justify-between text-xs text-stone-500 mb-1">
-            <span className="font-semibold text-rose-800 tracking-wide uppercase text-[10px]">
-              {item.brand}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="font-semibold text-rose-800 tracking-wide uppercase text-[10px]">
+                {item.brand}
+              </span>
+              <VerifiedBadge size="sm" showText={false} />
+            </div>
             <div className="flex items-center text-amber-600 font-medium">
               <Star className="w-3 h-3 fill-amber-500 text-amber-500 mr-0.5" />
               <span className="font-mono tabular-nums">{item.rating.toFixed(2)}</span>

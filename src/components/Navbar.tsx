@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Ruler, ShieldCheck, Heart, LayoutDashboard, User, LogOut, ChevronDown, Sparkles } from 'lucide-react';
+import { Ruler, ShieldCheck, Heart, LayoutDashboard, User, LogOut, ChevronDown, Sparkles, HelpCircle } from 'lucide-react';
 import { UserAccount } from '../types/rental';
 
 interface NavbarProps {
   currentCustomerTab: 'browse' | 'my-rentals' | 'care-policy';
   setCurrentCustomerTab: (tab: 'browse' | 'my-rentals' | 'care-policy') => void;
   onOpenSizeGuide: () => void;
+  onOpenOnboarding?: () => void;
   activeBookingsCount: number;
   currentUser: UserAccount | null;
   onOpenAuth: () => void;
@@ -18,6 +19,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentCustomerTab,
   setCurrentCustomerTab,
   onOpenSizeGuide,
+  onOpenOnboarding,
   activeBookingsCount,
   currentUser,
   onOpenAuth,
@@ -96,6 +98,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                 <span>ซักแห้งฟรี & ประกันคราบ</span>
               </button>
+
+              {onOpenOnboarding && (
+                <button
+                  type="button"
+                  onClick={onOpenOnboarding}
+                  className="flex items-center gap-1.5 transition-colors text-stone-600 hover:text-neutral-950 font-medium cursor-pointer"
+                >
+                  <HelpCircle className="w-3.5 h-3.5 text-stone-500" />
+                  <span>ขั้นตอนการเช่า</span>
+                </button>
+              )}
             </>
           ) : (
             /* NOT LOGGED IN NAVIGATION (Guest sees only recommended showcase) */
@@ -115,6 +128,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <Ruler className="w-3.5 h-3.5" />
                 <span>คำนวณไซส์ อก-เอว</span>
               </button>
+
+              {onOpenOnboarding && (
+                <button
+                  type="button"
+                  onClick={onOpenOnboarding}
+                  className="flex items-center gap-1.5 transition-colors text-stone-600 hover:text-neutral-950 font-medium cursor-pointer"
+                >
+                  <HelpCircle className="w-3.5 h-3.5 text-stone-500" />
+                  <span>วิธีเช่า 4 ขั้นตอน</span>
+                </button>
+              )}
 
               <button
                 onClick={() => setCurrentCustomerTab('care-policy')}

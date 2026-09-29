@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { SetBooking, WomenSetItem, UserAccount } from '../types/rental';
 import { ItemVisual } from '../components/ItemVisual';
 import { RentalOrderTimeline } from '../components/RentalOrderTimeline';
+import { EmptyState } from '../components/EmptyState';
+import { SkeletonLoader } from '../components/SkeletonLoader';
+import { StatusBadge } from '../components/StatusBadge';
 import { 
   Clock, CheckCircle2, RotateCcw, Sparkles, 
   FileText, MessageCircle, Scissors, Truck, Heart,
@@ -13,6 +16,7 @@ import { LOYALTY_TIERS, getTierProgress, getLoyaltyTier, calculatePointsEarned }
 interface MyRentalsViewProps {
   bookings: SetBooking[];
   items: WomenSetItem[];
+  isLoading?: boolean;
   onOpenContract: (item: WomenSetItem, days: number, startDate: string, endDate: string, size: any) => void;
   onOpenChat: (item: WomenSetItem) => void;
   onUpdateBookingStatus: (bookingId: string, newStatus: SetBooking['status']) => void;
@@ -25,6 +29,7 @@ interface MyRentalsViewProps {
 export const MyRentalsView: React.FC<MyRentalsViewProps> = ({
   bookings,
   items,
+  isLoading = false,
   onOpenContract,
   onOpenChat,
   onUpdateBookingStatus,
@@ -326,35 +331,25 @@ export const MyRentalsView: React.FC<MyRentalsViewProps> = ({
       })()}
 
       {/* Bookings List */}
-      {filtered.length === 0 ? (
-        <div className="py-20 text-center bg-white rounded-3xl border border-stone-200 mt-6 shadow-2xs">
-          <div className="w-14 h-14 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mx-auto mb-3">
-            <Heart className="w-7 h-7 stroke-[1.5]" />
-          </div>
-          <h3 className="font-serif text-lg font-bold text-neutral-900">
-            {bookings.length === 0 ? 'ยังไม่มีประวัติการเช่าชุด' : 'ไม่พบรายการเช่าในหมวดหมู่นี้'}
-          </h3>
-          <p className="text-xs text-stone-500 mt-1 max-w-sm mx-auto font-light">
-            {bookings.length === 0 
-              ? 'คุณยังไม่มีรายการเช่าในขณะนี้ สามารถเริ่มต้นสำรวจชุดเซ็ทแบรนด์เนมและดีไซน์เนอร์ลุคได้ทันทีค่ะ' 
-              : 'คุณสามารถเลือกดูทุกสถานะ หรือสำรวจคอลเลกชันชุดเซ็ทพรีเมียมทั้งหมดได้ทันที'}
-          </p>
-          <div className="mt-5 flex items-center justify-center gap-3">
-            {bookings.length > 0 && (
-              <button
-                onClick={() => setFilterStatus('all')}
-                className="px-4 py-2 rounded-xl border border-stone-200 text-stone-700 text-xs font-semibold hover:bg-stone-50 cursor-pointer"
-              >
-                ดูทั้งหมด ({bookings.length})
-              </button>
-            )}
-            <button
-              onClick={onExploreItems}
-              className="px-5 py-2 rounded-xl bg-neutral-950 text-white text-xs font-semibold hover:bg-neutral-800 transition-colors shadow-xs cursor-pointer active:scale-98"
-            >
-              {bookings.length === 0 ? 'สำรวจชุดเซ็ททั้งหมด' : 'ค้นหาชุดเซ็ทที่ใช่'}
-            </button>
-          </div>
+      {isLoading ? (
+        <div className="mt-6">
+          <SkeletonLoader variant="row" count={3} />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="mt-6">
+          <EmptyState
+            icon="wardrobe"
+            title={bookings.length === 0 ? 'ยังไม่มีประวัติการเช่าชุด' : 'ไม่พบรายการเช่าในหมวดหมู่นี้'}
+            description={
+              bookings.length === 0 
+                ? 'คุณยังไม่มีรายการเช่าในขณะนี้ สามารถเริ่มต้นสำรวจชุดเซ็ทแบรนด์เนมและดีไซน์เนอร์ลุคได้ทันทีค่ะ' 
+                : 'คุณสามารถเลือกดูทุกสถานะ หรือสำรวจคอลเลกชันชุดเซ็ทพรีเมียมทั้งหมดได้ทันที'
+            }
+            actionLabel={bookings.length === 0 ? 'สำรวจชุดเซ็ททั้งหมด' : 'ค้นหาชุดเซ็ทที่ใช่'}
+            onAction={onExploreItems}
+            secondaryActionLabel={bookings.length > 0 ? `ดูทั้งหมด (${bookings.length})` : undefined}
+            onSecondaryAction={() => setFilterStatus('all')}
+          />
         </div>
       ) : (
         <div className="mt-6 space-y-6">

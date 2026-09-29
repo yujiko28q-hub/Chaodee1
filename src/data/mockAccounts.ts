@@ -61,8 +61,32 @@ export const DEMO_ACCOUNTS: DemoCredentialAccount[] = [
   }
 ];
 
+export const getRegisteredAccounts = (): DemoCredentialAccount[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem('setista_registered_accounts');
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const saveRegisteredAccount = (account: DemoCredentialAccount) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const existing = getRegisteredAccounts();
+    const updated = [account, ...existing.filter(a => a.email.toLowerCase() !== account.email.toLowerCase())];
+    localStorage.setItem('setista_registered_accounts', JSON.stringify(updated));
+  } catch (e) {
+    console.error('Failed to save registered account', e);
+  }
+};
+
 export const getAccountByEmail = (email: string): DemoCredentialAccount | undefined => {
-  return DEMO_ACCOUNTS.find(a => a.email.toLowerCase() === email.trim().toLowerCase());
+  const clean = email.trim().toLowerCase();
+  const custom = getRegisteredAccounts().find(a => a.email.toLowerCase() === clean);
+  if (custom) return custom;
+  return DEMO_ACCOUNTS.find(a => a.email.toLowerCase() === clean);
 };
 
 export const verifyAccountCredentials = (
@@ -71,8 +95,11 @@ export const verifyAccountCredentials = (
 ): { success: boolean; account?: DemoCredentialAccount; error?: string } => {
   const cleanInput = emailOrUsername.trim().toLowerCase();
   
+  // Check dynamically registered accounts first, then fallback to DEMO_ACCOUNTS
+  const allAccounts = [...getRegisteredAccounts(), ...DEMO_ACCOUNTS];
+
   // Find matching account by email or part of name
-  const account = DEMO_ACCOUNTS.find(
+  const account = allAccounts.find(
     a => a.email.toLowerCase() === cleanInput || 
          a.name.toLowerCase().includes(cleanInput) ||
          (cleanInput === 'admin' && a.role === 'admin') ||
@@ -86,8 +113,13 @@ export const verifyAccountCredentials = (
     };
   }
 
-  // Validate PIN / Password (accept account PIN or 1234)
-  if (secret.trim() === account.passwordOrPin || secret.trim() === '1234' || secret.trim() === 'admin1234' || secret.trim() === 'cust1234') {
+  // Validate PIN / Password (accept account PIN or 1234 or admin1234)
+  if (
+    secret.trim() === account.passwordOrPin || 
+    secret.trim() === '1234' || 
+    secret.trim() === 'admin1234' || 
+    secret.trim() === 'cust1234'
+  ) {
     return { success: true, account };
   }
 
