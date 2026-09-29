@@ -1,0 +1,6 @@
+{
+  "name": "SETISTA - ร้านเช่าชุดเซ็ทผู้หญิง แฟชั่นแบรนด์เนม & คอนเซ็ปต์ลุค",
+  "description": "ร้านเช่าชุดเซ็ทผู้หญิงระดับพรีเมียม ชุดทวีต เซ็ทไปงานแต่ง สูททำงาน เซ็ทเที่ยวคาเฟ่ พร้อมบริการแก้ทรงฟรี ซักแห้งให้ไม่ต้องซักคืน",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
