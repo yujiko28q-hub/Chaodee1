@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { SetBooking, WomenSetItem, UserAccount } from '../types/rental';
-import { ItemVisual } from './ItemVisual';
-import { RentalOrderTimeline } from './RentalOrderTimeline';
+import { ItemVisual } from '../components/ItemVisual';
+import { RentalOrderTimeline } from '../components/RentalOrderTimeline';
 import { 
   Clock, CheckCircle2, RotateCcw, Sparkles, 
   FileText, MessageCircle, Scissors, Truck, Heart,

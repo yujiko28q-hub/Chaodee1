@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { WomenSetItem, OccasionCategory } from '../types/rental';
-import { ItemVisual } from './ItemVisual';
+import { ItemVisual } from '../components/ItemVisual';
 import { 
   Sparkles, Scissors, ShieldCheck, Truck, Star, ArrowRight, 
   Lock, CheckCircle2, Heart, Ruler, ChevronRight, UserCheck, Flame,

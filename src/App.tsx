@@ -1,56 +1,55 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { WomenSetItem, SetBooking, OccasionCategory, ApparelSize, UserAccount, SetReview, LoyaltyPointTransaction } from './types/rental';
 import { INITIAL_SET_ITEMS, INITIAL_MY_BOOKINGS, MOCK_SET_REVIEWS } from './data/mockRentals';
-import { Navbar } from './components/Navbar';
-import { HeroSection } from './components/HeroSection';
-import { FilterBar } from './components/FilterBar';
-import { RentalCard } from './components/RentalCard';
-import { RentalDetailModal } from './components/RentalDetailModal';
-import { CreateListingModal } from './components/CreateListingModal';
-import { MyRentalsView } from './components/MyRentalsView';
-import { AdminBackofficeView } from './components/AdminBackofficeView';
-import { GuestRecommendedView } from './components/GuestRecommendedView';
-import { UnifiedAuthModal } from './components/UnifiedAuthModal';
-import { ChatModal } from './components/ChatModal';
-import { RentalAgreementModal } from './components/RentalAgreementModal';
-import { SizeGuideModal } from './components/SizeGuideModal';
-import { SafetyGuaranteeSection } from './components/SafetyGuaranteeSection';
-import { ReviewModal } from './components/ReviewModal';
-import { LoyaltyProfileModal } from './components/LoyaltyProfileModal';
-import { Footer } from './components/Footer';
-import { calculatePointsEarned, getLoyaltyTier } from './utils/loyalty';
+
+// Architectural Layer 1: Page Views (src/pages/)
 import { 
-  CheckCircle2, LayoutDashboard, PlusCircle, LogOut, ArrowRight, Eye, X
+  GuestRecommendedPage, 
+  StorefrontPage, 
+  MyRentalsPage, 
+  AdminBackofficePage, 
+  CarePolicyPage 
+} from './pages';
+
+// Architectural Layer 2: Routing & Guards (src/routes/)
+import { ProtectedRoute } from './routes';
+
+// Architectural Layer 3: Reusable UI & Modal Components (src/components/)
+import {
+  Navbar,
+  Footer,
+  RentalDetailModal,
+  CreateListingModal,
+  UnifiedAuthModal,
+  ChatModal,
+  RentalAgreementModal,
+  SizeGuideModal,
+  ReviewModal,
+  LoyaltyProfileModal,
+} from './components';
+
+// Architectural Layer 4: Services & Utilities (src/services/ & src/utils/)
+import { calculatePointsEarned, getLoyaltyTier } from './utils/loyalty';
+import { StorageKeys, getStorageItem, setStorageItem, removeStorageItem } from './services/apiClient';
+
+import { 
+  CheckCircle2, LayoutDashboard, PlusCircle, X
 } from 'lucide-react';
 
 export default function App() {
   // Current Logged-in User Account: Admin vs Customer vs Guest (null)
-  // RULE: ถ้ายังไม่เข้าสู่ระบบ (null) จะเห็นเฉพาะ "หน้าที่แนะนำ" (Guest Recommended View)
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
-    try {
-      const saved = localStorage.getItem('setista_current_user_v7');
-      if (saved) return JSON.parse(saved);
-      // Default: Not logged in (Guest) -> Shows only the recommended page!
-      return null;
-    } catch {
-      return null;
-    }
+    return getStorageItem<UserAccount | null>(StorageKeys.CURRENT_USER, null);
   });
 
   // System Mode: 'storefront' (หน้าบ้าน) vs 'admin' (หลังบ้านแอดมิน)
-  // Backend is ONLY accessible if currentUser.role === 'admin'
   const [systemMode, setSystemMode] = useState<'storefront' | 'admin'>(() => {
-    try {
-      const savedUser = localStorage.getItem('setista_current_user_v7');
-      const user: UserAccount | null = savedUser ? JSON.parse(savedUser) : null;
-      const savedMode = localStorage.getItem('setista_system_mode_v7');
-      if (user?.role === 'admin' && savedMode === 'admin') {
-        return 'admin';
-      }
-      return 'storefront';
-    } catch {
-      return 'storefront';
+    const savedUser = getStorageItem<UserAccount | null>(StorageKeys.CURRENT_USER, null);
+    const savedMode = getStorageItem<'storefront' | 'admin'>(StorageKeys.SYSTEM_MODE, 'storefront');
+    if (savedUser?.role === 'admin' && savedMode === 'admin') {
+      return 'admin';
     }
+    return 'storefront';
   });
 
   // Auth Modal State
@@ -61,57 +60,42 @@ export default function App() {
 
   // Clothes and Outfits (The listings)
   const [items, setItems] = useState<WomenSetItem[]>(() => {
-    try {
-      const saved = localStorage.getItem('setista_items_v7');
-      return saved ? JSON.parse(saved) : INITIAL_SET_ITEMS;
-    } catch {
-      return INITIAL_SET_ITEMS;
-    }
+    return getStorageItem<WomenSetItem[]>(StorageKeys.ITEMS, INITIAL_SET_ITEMS);
   });
 
   // Rental Bookings
   const [bookings, setBookings] = useState<SetBooking[]>(() => {
-    try {
-      const saved = localStorage.getItem('setista_bookings_v8');
-      return saved ? JSON.parse(saved) : INITIAL_MY_BOOKINGS;
-    } catch {
-      return INITIAL_MY_BOOKINGS;
-    }
+    return getStorageItem<SetBooking[]>(StorageKeys.BOOKINGS, INITIAL_MY_BOOKINGS);
   });
 
   // Reviews Map State: Item ID -> SetReview[]
   const [reviewsMap, setReviewsMap] = useState<Record<string, SetReview[]>>(() => {
-    try {
-      const saved = localStorage.getItem('setista_reviews_v7');
-      return saved ? JSON.parse(saved) : MOCK_SET_REVIEWS;
-    } catch {
-      return MOCK_SET_REVIEWS;
-    }
+    return getStorageItem<Record<string, SetReview[]>>(StorageKeys.REVIEWS, MOCK_SET_REVIEWS);
   });
 
   // Local storage synchronization
   useEffect(() => {
-    localStorage.setItem('setista_system_mode_v7', systemMode);
+    setStorageItem(StorageKeys.SYSTEM_MODE, systemMode);
   }, [systemMode]);
 
   useEffect(() => {
     if (currentUser) {
-      localStorage.setItem('setista_current_user_v7', JSON.stringify(currentUser));
+      setStorageItem(StorageKeys.CURRENT_USER, currentUser);
     } else {
-      localStorage.removeItem('setista_current_user_v7');
+      removeStorageItem(StorageKeys.CURRENT_USER);
     }
   }, [currentUser]);
 
   useEffect(() => {
-    localStorage.setItem('setista_items_v7', JSON.stringify(items));
+    setStorageItem(StorageKeys.ITEMS, items);
   }, [items]);
 
   useEffect(() => {
-    localStorage.setItem('setista_bookings_v8', JSON.stringify(bookings));
+    setStorageItem(StorageKeys.BOOKINGS, bookings);
   }, [bookings]);
 
   useEffect(() => {
-    localStorage.setItem('setista_reviews_v7', JSON.stringify(reviewsMap));
+    setStorageItem(StorageKeys.REVIEWS, reviewsMap);
   }, [reviewsMap]);
 
   // Search & Filter State for Customer Storefront
@@ -438,11 +422,9 @@ export default function App() {
   const handleLoginSuccess = (account: UserAccount) => {
     setCurrentUser(account);
     if (account.role === 'admin') {
-      // Admin automatically enters backoffice upon login
       setSystemMode('admin');
       showToast(`เข้าสู่ระบบในฐานะแอดมิน: ยินดีต้อนรับ ${account.name}`);
     } else {
-      // Customer stays on storefront and sees full customer services
       setSystemMode('storefront');
       setCustomerTab('browse');
       showToast(`เข้าสู่ระบบลูกค้า: ยินดีต้อนรับ ${account.name}`);
@@ -459,13 +441,11 @@ export default function App() {
   // User-specific bookings: New accounts have no history until they rent a dress!
   const userBookings = useMemo(() => {
     if (!currentUser) return [];
-    // Admin backoffice sees all system bookings
     if (currentUser.role === 'admin') return bookings;
     
     return bookings.filter((b) => {
       if (b.userId) return b.userId === currentUser.id;
       if (b.userEmail) return b.userEmail.toLowerCase() === currentUser.email.toLowerCase();
-      // Pre-seeded customer account compatibility
       return currentUser.email.toLowerCase() === 'customer@setista.com' ||
              currentUser.name === 'คุณพิมพ์ลดา พัฒนกิจ';
     });
@@ -479,77 +459,84 @@ export default function App() {
 
   // =========================================================================
   // SYSTEM 1: ADMIN BACK-OFFICE SYSTEM (หลังบ้าน)
-  // RULE: จะเห็นเฉพาะตอนล็อคอินบัญชีแอดมินเท่านั้น!
+  // Protected with ProtectedRoute to ensure role separation
   // =========================================================================
-  if (systemMode === 'admin' && currentUser?.role === 'admin') {
+  if (systemMode === 'admin') {
     return (
-      <div className="min-h-screen bg-stone-100 flex flex-col font-sans">
-        {/* Toast Notification */}
-        {toastMessage && (
-          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl bg-neutral-950 text-white shadow-2xl text-xs font-medium animate-toast border border-stone-800 max-w-md">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span className="flex-1 leading-snug">{toastMessage}</span>
-            <button
-              type="button"
-              onClick={() => setToastMessage(null)}
-              className="p-1 rounded-full text-stone-400 hover:text-white hover:bg-stone-800 transition-colors cursor-pointer"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
+      <ProtectedRoute
+        currentUser={currentUser}
+        requiredRole="admin"
+        fallbackRoute={() => setSystemMode('storefront')}
+        onOpenAuth={() => setShowAuthModal(true)}
+      >
+        <div className="min-h-screen bg-stone-100 flex flex-col font-sans">
+          {/* Toast Notification */}
+          {toastMessage && (
+            <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl bg-neutral-950 text-white shadow-2xl text-xs font-medium animate-toast border border-stone-800 max-w-md">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span className="flex-1 leading-snug">{toastMessage}</span>
+              <button
+                type="button"
+                onClick={() => setToastMessage(null)}
+                className="p-1 rounded-full text-stone-400 hover:text-white hover:bg-stone-800 transition-colors cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
 
-        {/* Main Admin Console */}
-        <AdminBackofficeView
-          adminName={currentUser.name}
-          myListings={items}
-          allBookings={bookings}
-          onOpenCreateModal={() => {
-            setItemToEdit(null);
-            setShowCreateModal(true);
-          }}
-          onEditListing={(item) => {
-            setItemToEdit(item);
-            setShowCreateModal(true);
-          }}
-          onToggleAvailability={handleToggleAvailability}
-          onDeleteListing={handleDeleteListing}
-          onUpdateBookingStatus={handleUpdateBookingStatus}
-          onSwitchToStorefront={() => setSystemMode('storefront')}
-          onLogoutAdmin={handleLogout}
-          onOpenChatWithCustomer={(item) => setSelectedItemForChat(item)}
-          showToast={showToast}
-        />
-
-        {/* Modal: Add/Edit Clothing Listing */}
-        {showCreateModal && (
-          <CreateListingModal
-            onClose={() => {
-              setShowCreateModal(false);
+          {/* Main Admin Console from src/pages/ */}
+          <AdminBackofficePage
+            adminName={currentUser?.name || 'ผู้ดูแลระบบ'}
+            myListings={items}
+            allBookings={bookings}
+            onOpenCreateModal={() => {
               setItemToEdit(null);
+              setShowCreateModal(true);
             }}
-            onAddListing={handleAddListing}
-            itemToEdit={itemToEdit}
-            onUpdateListing={handleUpdateListing}
+            onEditListing={(item) => {
+              setItemToEdit(item);
+              setShowCreateModal(true);
+            }}
+            onToggleAvailability={handleToggleAvailability}
+            onDeleteListing={handleDeleteListing}
+            onUpdateBookingStatus={handleUpdateBookingStatus}
+            onSwitchToStorefront={() => setSystemMode('storefront')}
+            onLogoutAdmin={handleLogout}
+            onOpenChatWithCustomer={(item) => setSelectedItemForChat(item)}
+            showToast={showToast}
           />
-        )}
 
-        {/* Chat with Customer Modal in Admin Mode */}
-        {selectedItemForChat && (
-          <ChatModal
-            item={selectedItemForChat}
-            onClose={() => setSelectedItemForChat(null)}
-            customerName="ลูกค้า"
-          />
-        )}
-      </div>
+          {/* Modal: Add/Edit Clothing Listing */}
+          {showCreateModal && (
+            <CreateListingModal
+              onClose={() => {
+                setShowCreateModal(false);
+                setItemToEdit(null);
+              }}
+              onAddListing={handleAddListing}
+              itemToEdit={itemToEdit}
+              onUpdateListing={handleUpdateListing}
+            />
+          )}
+
+          {/* Chat with Customer Modal in Admin Mode */}
+          {selectedItemForChat && (
+            <ChatModal
+              item={selectedItemForChat}
+              onClose={() => setSelectedItemForChat(null)}
+              customerName="ลูกค้า"
+            />
+          )}
+        </div>
+      </ProtectedRoute>
     );
   }
 
   // =========================================================================
   // SYSTEM 2: STOREFRONT SYSTEM (หน้าบ้าน)
-  // RULE 1: ถ้ายังไม่เข้าสู่ระบบ -> ให้เห็นเฉพาะ "หน้าที่แนะนำ" (Guest Recommended View)
-  // RULE 2: ถ้าเข้าสู่ระบบบัญชีลูกค้าแล้ว -> เห็นบริการเต็มรูปแบบ (แคตตาล็อก, คำนวณไซส์, ตู้เสื้อผ้าที่เช่า) ไม่มีปุ่มหลังบ้าน!
+  // RULE 1: ถ้ายังไม่เข้าสู่ระบบ -> ให้เห็นเฉพาะ "หน้าที่แนะนำ" (Guest Recommended Page)
+  // RULE 2: ถ้าเข้าสู่ระบบบัญชีลูกค้าแล้ว -> เห็นบริการเต็มรูปแบบ (StorefrontPage, MyRentalsPage, CarePolicyPage)
   // =========================================================================
   return (
     <div className="min-h-screen flex flex-col bg-stone-50 text-neutral-900 font-sans selection:bg-rose-900 selection:text-rose-100">
@@ -629,11 +616,11 @@ export default function App() {
         onLogout={handleLogout}
       />
 
-      {/* Main Content Area */}
+      {/* Main Content Area: Routes to Pages */}
       <main className="flex-1">
         {/* CASE A: USER IS NOT LOGGED IN -> SHOW ONLY RECOMMENDED PAGE */}
         {!currentUser && customerTab !== 'care-policy' && (
-          <GuestRecommendedView
+          <GuestRecommendedPage
             recommendedItems={recommendedItems}
             onOpenAuth={() => setShowAuthModal(true)}
             onSelectItemPreview={(item) => setSelectedItemForDetail(item)}
@@ -643,77 +630,29 @@ export default function App() {
 
         {/* CASE B: USER IS LOGGED IN AS CUSTOMER -> FULL CUSTOMER SERVICES */}
         {currentUser && customerTab === 'browse' && (
-          <>
-            {/* Fashion Editorial Hero */}
-            <HeroSection
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              selectedCategory={selectedCategory}
-              setSelectedCategory={setSelectedCategory}
-              selectedSize={selectedSize}
-              setSelectedSize={setSelectedSize}
-              onOpenSizeGuide={() => setShowSizeGuideModal(true)}
-              onSearchSubmit={() => {}}
-            />
-
-            {/* Filter & Occasion Bar */}
-            <FilterBar
-              selectedCategory={selectedCategory}
-              setSelectedCategory={setSelectedCategory}
-              selectedSize={selectedSize}
-              setSelectedSize={setSelectedSize}
-              sortBy={sortBy}
-              setSortBy={setSortBy}
-              onlyAvailable={onlyAvailable}
-              setOnlyAvailable={setOnlyAvailable}
-              maxPrice={maxPrice}
-              setMaxPrice={setMaxPrice}
-              totalCount={filteredItems.length}
-            />
-
-            {/* Catalog Grid */}
-            <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-              {filteredItems.length === 0 ? (
-                <div className="py-24 text-center bg-white rounded-3xl border border-stone-200 shadow-2xs">
-                  <span className="text-4xl block mb-3">👗</span>
-                  <h3 className="font-serif text-lg font-bold text-neutral-900">
-                    ไม่พบชุดเซ็ทตรงตามเงื่อนไขที่เลือก
-                  </h3>
-                  <p className="text-xs text-stone-500 mt-1 max-w-sm mx-auto font-light">
-                    ลองล้างตัวกรองหรือเลือกโอกาสอื่น เพื่อค้นหาชุดเซ็ทที่คุณถูกใจ
-                  </p>
-                  <button
-                    onClick={() => {
-                      setSelectedCategory('all');
-                      setSelectedSize('all');
-                      setSearchQuery('');
-                      setOnlyAvailable(false);
-                      setMaxPrice(10000);
-                    }}
-                    className="mt-4 px-4 py-2 rounded-xl bg-neutral-950 text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer"
-                  >
-                    ล้างตัวกรองทั้งหมด
-                  </button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {filteredItems.map((item) => (
-                    <RentalCard
-                      key={item.id}
-                      item={item}
-                      onSelect={(selected) => setSelectedItemForDetail(selected)}
-                      onOpenChat={(chatItem) => setSelectedItemForChat(chatItem)}
-                    />
-                  ))}
-                </div>
-              )}
-            </section>
-          </>
+          <StorefrontPage
+            items={filteredItems}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+            selectedSize={selectedSize}
+            setSelectedSize={setSelectedSize}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            onlyAvailable={onlyAvailable}
+            setOnlyAvailable={setOnlyAvailable}
+            maxPrice={maxPrice}
+            setMaxPrice={setMaxPrice}
+            onOpenSizeGuide={() => setShowSizeGuideModal(true)}
+            onSelectItem={(item) => setSelectedItemForDetail(item)}
+            onOpenChat={(item) => setSelectedItemForChat(item)}
+          />
         )}
 
         {/* Customer Wardrobe View (ตู้เสื้อผ้าและประวัติการเช่าของลูกค้า) */}
         {currentUser && customerTab === 'my-rentals' && (
-          <MyRentalsView
+          <MyRentalsPage
             bookings={userBookings}
             items={items}
             currentUser={currentUser}
@@ -730,11 +669,11 @@ export default function App() {
 
         {/* Customer Care & Guarantee Policy View (บริการซักแห้งฟรี & ประกันคราบ) */}
         {customerTab === 'care-policy' && (
-          <SafetyGuaranteeSection />
+          <CarePolicyPage />
         )}
       </main>
 
-      {/* Customer Footer (ไม่มีปุ่มหลังบ้าน) */}
+      {/* Customer Footer */}
       <Footer
         onSelectCategory={(cat) => {
           if (currentUser) {

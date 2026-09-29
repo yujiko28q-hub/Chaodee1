@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { WomenSetItem, SetBooking } from '../types/rental';
-import { ItemVisual } from './ItemVisual';
+import { ItemVisual } from '../components/ItemVisual';
 import { 
   PlusCircle, Sparkles, CheckCircle2, RotateCcw, 
   Scissors, Phone, Copy, Share2, ToggleLeft, ToggleRight, 
